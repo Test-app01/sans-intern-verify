@@ -14,13 +14,75 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      admin_users: {
+        Row: {
+          created_at: string
+          id: string
+          password_hash: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          password_hash: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          password_hash?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      interns: {
+        Row: {
+          certificate_id: string
+          created_at: string
+          email: string
+          end_date: string
+          full_name: string
+          id: string
+          role: string
+          start_date: string
+          updated_at: string
+          verification_code: string
+        }
+        Insert: {
+          certificate_id: string
+          created_at?: string
+          email: string
+          end_date: string
+          full_name: string
+          id?: string
+          role: string
+          start_date: string
+          updated_at?: string
+          verification_code: string
+        }
+        Update: {
+          certificate_id?: string
+          created_at?: string
+          email?: string
+          end_date?: string
+          full_name?: string
+          id?: string
+          role?: string
+          start_date?: string
+          updated_at?: string
+          verification_code?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_unique_code: {
+        Args: { prefix?: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

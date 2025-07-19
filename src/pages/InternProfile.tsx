@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -6,16 +7,18 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Download, Share2, ArrowLeft, Calendar, Mail, User, Award, CheckCircle, FileText, Hash } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Intern {
   id: string;
-  fullName: string;
+  full_name: string;
   email: string;
   role: string;
-  startDate: string;
-  endDate: string;
-  certificateId: string;
-  verificationCode: string;
+  start_date: string;
+  end_date: string;
+  certificate_id: string;
+  verification_code: string;
+  created_at: string;
 }
 
 const InternProfile = () => {
@@ -26,15 +29,33 @@ const InternProfile = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load intern data from localStorage (in production, this will be from your database)
-    const savedInterns = localStorage.getItem('sans-interns');
-    if (savedInterns) {
-      const interns: Intern[] = JSON.parse(savedInterns);
-      const foundIntern = interns.find(i => i.verificationCode === code || i.certificateId === code);
-      setIntern(foundIntern || null);
-    }
-    setLoading(false);
+    loadIntern();
   }, [code]);
+
+  const loadIntern = async () => {
+    if (!code) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('interns')
+        .select('*')
+        .or(`verification_code.eq.${code},certificate_id.eq.${code}`)
+        .single();
+
+      if (error || !data) {
+        setIntern(null);
+      } else {
+        setIntern(data);
+      }
+    } catch (error) {
+      setIntern(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleDownloadCertificate = () => {
     toast({
@@ -50,7 +71,7 @@ const InternProfile = () => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `${intern?.fullName} - SANS Media Certificate`,
+          title: `${intern?.full_name} - SANS Media Certificate`,
           text: `Verify this internship certificate from SANS Media`,
           url: shareUrl,
         });
@@ -138,7 +159,7 @@ const InternProfile = () => {
             <div className="lg:col-span-2">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-2xl">{intern.fullName}</CardTitle>
+                  <CardTitle className="text-2xl">{intern.full_name}</CardTitle>
                   <CardDescription>Internship Certificate Details</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -164,7 +185,7 @@ const InternProfile = () => {
                       <div>
                         <p className="font-medium">Duration</p>
                         <p className="text-muted-foreground">
-                          {new Date(intern.startDate).toLocaleDateString()} - {new Date(intern.endDate).toLocaleDateString()}
+                          {new Date(intern.start_date).toLocaleDateString()} - {new Date(intern.end_date).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
@@ -173,7 +194,7 @@ const InternProfile = () => {
                       <Hash className="w-5 h-5 text-primary" />
                       <div>
                         <p className="font-medium">Certificate ID</p>
-                        <p className="text-muted-foreground font-mono">{intern.certificateId}</p>
+                        <p className="text-muted-foreground font-mono">{intern.certificate_id}</p>
                       </div>
                     </div>
                   </div>
@@ -184,7 +205,7 @@ const InternProfile = () => {
                     <h3 className="font-semibold mb-3">Verification Details</h3>
                     <div className="flex flex-wrap gap-2">
                       <Badge variant="outline">
-                        Code: {intern.verificationCode}
+                        Code: {intern.verification_code}
                       </Badge>
                       <Badge variant="secondary">
                         Verified

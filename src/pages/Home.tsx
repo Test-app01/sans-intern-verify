@@ -1,17 +1,20 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, Search, Award } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const Home = () => {
   const [verificationCode, setVerificationCode] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleVerification = (e: React.FormEvent) => {
+  const handleVerification = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!verificationCode.trim()) {
@@ -23,15 +26,33 @@ const Home = () => {
       return;
     }
 
-    // For now, we'll simulate verification - later this will connect to your database
-    if (verificationCode === 'SM1234') {
-      navigate(`/intern/SM1234`);
-    } else {
+    setLoading(true);
+
+    try {
+      const { data: intern, error } = await supabase
+        .from('interns')
+        .select('*')
+        .or(`verification_code.eq.${verificationCode},certificate_id.eq.${verificationCode}`)
+        .single();
+
+      if (error || !intern) {
+        toast({
+          title: "Invalid Code",
+          description: "The verification code you entered was not found in our system.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      navigate(`/intern/${verificationCode}`);
+    } catch (error) {
       toast({
-        title: "Invalid Code",
-        description: "The verification code you entered was not found in our system.",
+        title: "Error",
+        description: "Something went wrong. Please try again.",
         variant: "destructive"
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -65,39 +86,6 @@ const Home = () => {
           </p>
         </div>
 
-        {/* Features */}
-        <div className="grid md:grid-cols-3 gap-8 mb-16">
-          <Card className="bg-card/50 border-border hover:border-primary/50 transition-colors">
-            <CardHeader className="text-center">
-              <Shield className="w-12 h-12 text-primary mx-auto mb-4" />
-              <CardTitle>Secure Verification</CardTitle>
-              <CardDescription>
-                Advanced security measures ensure certificate authenticity
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          <Card className="bg-card/50 border-border hover:border-primary/50 transition-colors">
-            <CardHeader className="text-center">
-              <Search className="w-12 h-12 text-accent mx-auto mb-4" />
-              <CardTitle>Quick Lookup</CardTitle>
-              <CardDescription>
-                Instantly verify certificates using unique verification codes
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          <Card className="bg-card/50 border-border hover:border-primary/50 transition-colors">
-            <CardHeader className="text-center">
-              <Award className="w-12 h-12 text-success mx-auto mb-4" />
-              <CardTitle>Trusted Credentials</CardTitle>
-              <CardDescription>
-                Official certificates backed by SANS Media's reputation
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </div>
-
         {/* Verification Form */}
         <div className="max-w-md mx-auto">
           <Card className="bg-card border-border shadow-2xl">
@@ -116,11 +104,12 @@ const Home = () => {
                     value={verificationCode}
                     onChange={(e) => setVerificationCode(e.target.value.toUpperCase())}
                     className="text-center text-lg font-mono"
+                    disabled={loading}
                   />
                 </div>
-                <Button type="submit" variant="gradient" size="lg" className="w-full">
+                <Button type="submit" variant="gradient" size="lg" className="w-full" disabled={loading}>
                   <Search className="w-4 h-4 mr-2" />
-                  Verify Certificate
+                  {loading ? 'Verifying...' : 'Verify Certificate'}
                 </Button>
               </form>
             </CardContent>
