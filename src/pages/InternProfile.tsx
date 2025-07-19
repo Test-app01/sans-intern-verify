@@ -58,11 +58,48 @@ const InternProfile = () => {
   };
 
   const handleDownloadCertificate = () => {
+    if (!intern) return;
+
+    // Create certificate content
+    const certificateContent = `
+CERTIFICATE OF COMPLETION
+
+This is to certify that
+
+${intern.full_name}
+
+has successfully completed the internship program as
+
+${intern.role}
+
+From: ${new Date(intern.start_date).toLocaleDateString()}
+To: ${new Date(intern.end_date).toLocaleDateString()}
+
+Certificate ID: ${intern.certificate_id}
+Verification Code: ${intern.verification_code}
+
+SANS Media
+Digital Innovation & Excellence
+
+This certificate can be verified at: ${window.location.origin}/intern/${intern.verification_code}
+    `;
+
+    // Create and download the file
+    const blob = new Blob([certificateContent], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${intern.full_name.replace(/\s+/g, '_')}_Certificate.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
     toast({
-      title: "Download Started",
-      description: "Your certificate PDF is being prepared for download",
+      title: "Certificate Downloaded",
+      description: "Your certificate has been downloaded successfully",
     });
-    // This will be implemented with PDF generation
   };
 
   const handleShareCertificate = async () => {
@@ -236,7 +273,7 @@ const InternProfile = () => {
                     onClick={handleDownloadCertificate}
                   >
                     <Download className="w-4 h-4 mr-2" />
-                    Download PDF
+                    Download Certificate
                   </Button>
                   
                   <Button 
