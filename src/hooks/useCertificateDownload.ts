@@ -38,21 +38,20 @@ export const useCertificateDownload = () => {
           <!-- Decorative elements -->
           <div style="position: absolute; top: 16px; left: 16px; width: 16px; height: 16px; background: rgba(196, 181, 253, 0.6); border-radius: 50%;"></div>
           <div style="position: absolute; bottom: 16px; right: 16px; width: 16px; height: 16px; background: rgba(196, 181, 253, 0.6); border-radius: 50%;"></div>
-          <div style="position: absolute; top: 16px; right: 16px; width: 12px; height: 12px; background: rgba(251, 191, 36, 0.7); border-radius: 50%;"></div>
           <div style="position: absolute; bottom: 16px; left: 16px; width: 12px; height: 12px; background: rgba(251, 191, 36, 0.7); border-radius: 50%;"></div>
           
           <!-- Header with Agency Logo -->
           <div style="text-align: center; margin-bottom: 24px;">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-              <div style="width: 64px; height: 64px; display: flex; align-items: center; justify-content: center;">
-                <img src="/lovable-uploads/c8cc628d-51e0-400d-832c-8697b70ecd8e.png" alt="SANS Media Logo" style="width: 56px; height: 56px; object-fit: contain;" />
+              <div style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center;">
+                <img src="/lovable-uploads/c8cc628d-51e0-400d-832c-8697b70ecd8e.png" alt="SANS Media Logo" style="width: 72px; height: 72px; object-fit: contain;" />
               </div>
               <div>
                 <h1 style="font-size: 28px; font-weight: bold; color: white; letter-spacing: 0.1em; margin: 0;">SANS MEDIA</h1>
                 <p style="font-size: 16px; color: #C4B5FD; margin: 4px 0 0 0;">Digital Innovation & Excellence</p>
               </div>
-              <div style="width: 40px; height: 40px; border: 3px solid #F59E0B; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                <span style="color: #F59E0B; font-weight: bold; font-size: 18px;">&</span>
+              <div style="width: 64px; height: 64px; display: flex; align-items: center; justify-content: center;">
+                <img src="/lovable-uploads/43652e6d-e6d0-47ec-a640-167b0b45854e.png" alt="Verification QR Code" style="width: 64px; height: 64px; object-fit: contain;" />
               </div>
             </div>
           </div>

@@ -31,25 +31,28 @@ const CertificateTemplate: React.FC<CertificateTemplateProps> = ({
       {/* Decorative elements */}
       <div className="absolute top-4 left-4 w-4 h-4 bg-purple-400 rounded-full opacity-60"></div>
       <div className="absolute bottom-4 right-4 w-4 h-4 bg-purple-400 rounded-full opacity-60"></div>
-      <div className="absolute top-4 right-4 w-3 h-3 bg-yellow-400 rounded-full opacity-70"></div>
       <div className="absolute bottom-4 left-4 w-3 h-3 bg-yellow-400 rounded-full opacity-70"></div>
       
       {/* Header with Agency Logo */}
       <div className="text-center mb-6">
         <div className="flex items-center justify-between mb-3">
-          <div className="w-16 h-16 flex items-center justify-center">
+          <div className="w-20 h-20 flex items-center justify-center">
             <img 
               src="/lovable-uploads/c8cc628d-51e0-400d-832c-8697b70ecd8e.png" 
               alt="SANS Media Logo" 
-              className="w-14 h-14 object-contain"
+              className="w-18 h-18 object-contain"
             />
           </div>
           <div>
             <h1 className="text-3xl font-bold text-white tracking-wider">SANS MEDIA</h1>
             <p className="text-base text-purple-200 mt-1">Digital Innovation & Excellence</p>
           </div>
-          <div className="w-10 h-10 border-3 border-yellow-400 rounded-full flex items-center justify-center">
-            <span className="text-yellow-400 font-bold text-lg">&</span>
+          <div className="w-16 h-16 flex items-center justify-center">
+            <img 
+              src="/lovable-uploads/43652e6d-e6d0-47ec-a640-167b0b45854e.png" 
+              alt="Verification QR Code" 
+              className="w-16 h-16 object-contain"
+            />
           </div>
         </div>
       </div>
