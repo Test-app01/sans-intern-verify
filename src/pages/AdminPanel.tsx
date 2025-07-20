@@ -8,9 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { UserPlus, Users, LogOut, Calendar, Mail, User, Award, Hash } from 'lucide-react';
+import { UserPlus, Users, LogOut, Calendar, Mail, User, Award, Hash, Lock, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useCertificateDownload } from '@/hooks/useCertificateDownload';
 
 interface Intern {
   id: string;
@@ -27,12 +28,12 @@ interface Intern {
 const AdminPanel = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { downloadCertificate } = useCertificateDownload();
   const [interns, setInterns] = useState<Intern[]>([]);
   const [loading, setLoading] = useState(false);
-  const [showLogin, setShowLogin] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginData, setLoginData] = useState({ username: '', password: '' });
   const [loginLoading, setLoginLoading] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -47,8 +48,6 @@ const AdminPanel = () => {
     if (adminAuth) {
       setIsAuthenticated(true);
       loadInterns();
-    } else {
-      setShowLogin(true);
     }
   }, []);
 
@@ -83,7 +82,6 @@ const AdminPanel = () => {
       // Store admin session
       localStorage.setItem('adminAuth', JSON.stringify(data.admin));
       setIsAuthenticated(true);
-      setShowLogin(false);
       
       toast({
         title: "Login Successful",
@@ -123,7 +121,7 @@ const AdminPanel = () => {
   const handleLogout = () => {
     localStorage.removeItem('adminAuth');
     setIsAuthenticated(false);
-    setShowLogin(true);
+    setLoginData({ username: '', password: '' });
     toast({
       title: "Logged out",
       description: "You have been successfully logged out",
@@ -179,57 +177,39 @@ const AdminPanel = () => {
     }
   };
 
-  const generateCertificatePDF = (intern: Intern) => {
-    // Create a simple certificate content
-    const certificateContent = `
-      CERTIFICATE OF COMPLETION
-      
-      This is to certify that
-      
-      ${intern.full_name}
-      
-      has successfully completed the internship program as
-      
-      ${intern.role}
-      
-      From: ${new Date(intern.start_date).toLocaleDateString()}
-      To: ${new Date(intern.end_date).toLocaleDateString()}
-      
-      Certificate ID: ${intern.certificate_id}
-      Verification Code: ${intern.verification_code}
-      
-      SANS Media
-      Digital Innovation & Excellence
-    `;
-
-    // Create a blob with the certificate content
-    const blob = new Blob([certificateContent], { type: 'text/plain' });
-    const url = window.URL.createObjectURL(blob);
-    
-    // Create download link
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${intern.full_name.replace(/\s+/g, '_')}_Certificate.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-
-    toast({
-      title: "Certificate Downloaded",
-      description: `Certificate for ${intern.full_name} has been downloaded`,
+  const handleDownloadCertificate = async (intern: Intern) => {
+    const success = await downloadCertificate({
+      fullName: intern.full_name,
+      role: intern.role,
+      startDate: intern.start_date,
+      endDate: intern.end_date,
+      certificateId: intern.certificate_id,
+      verificationCode: intern.verification_code
     });
+
+    if (success) {
+      toast({
+        title: "Certificate Downloaded",
+        description: `PDF certificate for ${intern.full_name} has been downloaded`,
+      });
+    } else {
+      toast({
+        title: "Download Failed",
+        description: "Failed to generate certificate PDF",
+        variant: "destructive"
+      });
+    }
   };
 
   // Login form
-  if (showLogin) {
+  if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="w-full max-w-md px-6">
           <Card className="bg-card border-border shadow-2xl">
             <CardHeader className="text-center">
               <div className="w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center mx-auto mb-4">
-                <User className="w-8 h-8 text-primary-foreground" />
+                <Lock className="w-8 h-8 text-primary-foreground" />
               </div>
               <CardTitle className="text-2xl">Admin Access</CardTitle>
               <CardDescription>
@@ -240,32 +220,46 @@ const AdminPanel = () => {
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>
                   <Label htmlFor="username">Username</Label>
-                  <Input
-                    id="username"
-                    type="text"
-                    placeholder="Enter username"
-                    value={loginData.username}
-                    onChange={(e) => setLoginData({...loginData, username: e.target.value})}
-                    disabled={loginLoading}
-                  />
+                  <div className="relative">
+                    <User className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="username"
+                      type="text"
+                      placeholder="Enter username"
+                      value={loginData.username}
+                      onChange={(e) => setLoginData({...loginData, username: e.target.value})}
+                      className="pl-10"
+                      disabled={loginLoading}
+                    />
+                  </div>
                 </div>
 
                 <div>
                   <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Enter password"
-                    value={loginData.password}
-                    onChange={(e) => setLoginData({...loginData, password: e.target.value})}
-                    disabled={loginLoading}
-                  />
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="Enter password"
+                      value={loginData.password}
+                      onChange={(e) => setLoginData({...loginData, password: e.target.value})}
+                      className="pl-10"
+                      disabled={loginLoading}
+                    />
+                  </div>
                 </div>
 
                 <Button type="submit" variant="gradient" size="lg" className="w-full" disabled={loginLoading}>
                   {loginLoading ? 'Signing In...' : 'Sign In'}
                 </Button>
               </form>
+
+              <div className="mt-6 text-center text-sm text-muted-foreground">
+                <p>Demo Credentials:</p>
+                <p>Username: <code className="bg-muted px-1 rounded">admin</code></p>
+                <p>Password: <code className="bg-muted px-1 rounded">sansmedia2024</code></p>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -442,12 +436,12 @@ const AdminPanel = () => {
                               </div>
                             </div>
                             <Button
-                              variant="accent"
+                              variant="gradient"
                               size="sm"
-                              onClick={() => generateCertificatePDF(intern)}
+                              onClick={() => handleDownloadCertificate(intern)}
                             >
-                              <Award className="w-4 h-4 mr-2" />
-                              Download Certificate
+                              <Download className="w-4 h-4 mr-2" />
+                              Download PDF
                             </Button>
                           </div>
                         </CardContent>

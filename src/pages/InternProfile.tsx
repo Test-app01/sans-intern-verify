@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { Download, Share2, ArrowLeft, Calendar, Mail, User, Award, CheckCircle, FileText, Hash } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useCertificateDownload } from '@/hooks/useCertificateDownload';
 
 interface Intern {
   id: string;
@@ -25,6 +25,7 @@ const InternProfile = () => {
   const { code } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { downloadCertificate } = useCertificateDownload();
   const [intern, setIntern] = useState<Intern | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -57,49 +58,30 @@ const InternProfile = () => {
     }
   };
 
-  const handleDownloadCertificate = () => {
+  const handleDownloadCertificate = async () => {
     if (!intern) return;
 
-    // Create certificate content
-    const certificateContent = `
-CERTIFICATE OF COMPLETION
-
-This is to certify that
-
-${intern.full_name}
-
-has successfully completed the internship program as
-
-${intern.role}
-
-From: ${new Date(intern.start_date).toLocaleDateString()}
-To: ${new Date(intern.end_date).toLocaleDateString()}
-
-Certificate ID: ${intern.certificate_id}
-Verification Code: ${intern.verification_code}
-
-SANS Media
-Digital Innovation & Excellence
-
-This certificate can be verified at: ${window.location.origin}/intern/${intern.verification_code}
-    `;
-
-    // Create and download the file
-    const blob = new Blob([certificateContent], { type: 'text/plain' });
-    const url = window.URL.createObjectURL(blob);
-    
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${intern.full_name.replace(/\s+/g, '_')}_Certificate.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-
-    toast({
-      title: "Certificate Downloaded",
-      description: "Your certificate has been downloaded successfully",
+    const success = await downloadCertificate({
+      fullName: intern.full_name,
+      role: intern.role,
+      startDate: intern.start_date,
+      endDate: intern.end_date,
+      certificateId: intern.certificate_id,
+      verificationCode: intern.verification_code
     });
+
+    if (success) {
+      toast({
+        title: "Certificate Downloaded",
+        description: "Your PDF certificate has been downloaded successfully",
+      });
+    } else {
+      toast({
+        title: "Download Failed",
+        description: "Failed to generate certificate PDF",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleShareCertificate = async () => {
@@ -273,7 +255,7 @@ This certificate can be verified at: ${window.location.origin}/intern/${intern.v
                     onClick={handleDownloadCertificate}
                   >
                     <Download className="w-4 h-4 mr-2" />
-                    Download Certificate
+                    Download PDF Certificate
                   </Button>
                   
                   <Button 
@@ -297,7 +279,8 @@ This certificate can be verified at: ${window.location.origin}/intern/${intern.v
                   <div className="aspect-[4/3] bg-gradient-to-br from-primary/10 to-accent/10 rounded-lg border-2 border-dashed border-border flex items-center justify-center">
                     <div className="text-center">
                       <Award className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
-                      <p className="text-sm text-muted-foreground">Certificate preview will be shown here</p>
+                      <p className="text-sm text-muted-foreground">Professional PDF certificate</p>
+                      <p className="text-xs text-muted-foreground">matching SANS Media design</p>
                     </div>
                   </div>
                 </CardContent>
