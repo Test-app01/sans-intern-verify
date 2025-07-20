@@ -1,8 +1,5 @@
 # Welcome to your Lovable project
 
-https://sans-media-interns.web.app/
-
-
 ## Project info
 
 **URL**: https://lovable.dev/projects/1e995399-3749-4aa9-a6e5-27300817e95f
