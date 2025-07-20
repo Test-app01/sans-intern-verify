@@ -6,12 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { UserPlus, Users, LogOut, Calendar, Mail, User, Award, Hash, Lock, Download } from 'lucide-react';
+import { UserPlus, Users, LogOut, Award, Lock, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useCertificateDownload } from '@/hooks/useCertificateDownload';
+import InternTable from '@/components/InternTable';
+import EditInternDialog from '@/components/EditInternDialog';
+import CertificatePreviewDialog from '@/components/CertificatePreviewDialog';
 
 interface Intern {
   id: string;
@@ -22,6 +24,7 @@ interface Intern {
   end_date: string;
   certificate_id: string;
   verification_code: string;
+  status?: 'Active' | 'Completed' | 'Revoked';
   created_at: string;
 }
 
@@ -34,6 +37,8 @@ const AdminPanel = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginData, setLoginData] = useState({ username: '', password: '' });
   const [loginLoading, setLoginLoading] = useState(false);
+  const [editingIntern, setEditingIntern] = useState<Intern | null>(null);
+  const [previewIntern, setPreviewIntern] = useState<Intern | null>(null);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -177,6 +182,77 @@ const AdminPanel = () => {
     }
   };
 
+  const handleEditIntern = async (updatedIntern: Intern) => {
+    try {
+      const { error } = await supabase
+        .from('interns')
+        .update({
+          full_name: updatedIntern.full_name,
+          email: updatedIntern.email,
+          role: updatedIntern.role,
+          start_date: updatedIntern.start_date,
+          end_date: updatedIntern.end_date,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', updatedIntern.id);
+
+      if (error) throw error;
+
+      await loadInterns();
+      toast({
+        title: "Success",
+        description: "Intern details updated successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update intern details",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDeleteIntern = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('interns')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      await loadInterns();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete intern record",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleStatusChange = async (id: string, status: 'Active' | 'Completed' | 'Revoked') => {
+    try {
+      const { error } = await supabase
+        .from('interns')
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      await loadInterns();
+      toast({
+        title: "Status Updated",
+        description: `Intern status changed to ${status}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update status",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleDownloadCertificate = async (intern: Intern) => {
     const success = await downloadCertificate({
       fullName: intern.full_name,
@@ -199,6 +275,38 @@ const AdminPanel = () => {
         variant: "destructive"
       });
     }
+  };
+
+  const handleExportCSV = () => {
+    const csvContent = [
+      ['Name', 'Email', 'Role', 'Start Date', 'End Date', 'Certificate ID', 'Verification Code', 'Status', 'Created Date'],
+      ...interns.map(intern => [
+        intern.full_name,
+        intern.email,
+        intern.role,
+        intern.start_date,
+        intern.end_date,
+        intern.certificate_id,
+        intern.verification_code,
+        intern.status || 'Active',
+        new Date(intern.created_at).toLocaleDateString()
+      ])
+    ].map(row => row.join(',')).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `interns_export_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+
+    toast({
+      title: "Export Complete",
+      description: "Intern data has been exported to CSV",
+    });
   };
 
   // Login form
@@ -286,7 +394,7 @@ const AdminPanel = () => {
       </header>
 
       <div className="container mx-auto px-6 py-8">
-        <Tabs defaultValue="add-intern" className="space-y-6">
+        <Tabs defaultValue="manage-interns" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 max-w-md">
             <TabsTrigger value="add-intern" className="flex items-center gap-2">
               <UserPlus className="w-4 h-4" />
@@ -386,74 +494,39 @@ const AdminPanel = () => {
           </TabsContent>
 
           <TabsContent value="manage-interns">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-primary" />
-                  Manage Interns
-                </CardTitle>
-                <CardDescription>
-                  View and manage all registered interns
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {interns.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No interns yet</h3>
-                    <p className="text-muted-foreground">Add your first intern to get started</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {interns.map((intern) => (
-                      <Card key={intern.id} className="bg-card/50">
-                        <CardContent className="pt-6">
-                          <div className="flex items-start justify-between">
-                            <div className="space-y-2">
-                              <h3 className="font-semibold text-lg">{intern.full_name}</h3>
-                              <div className="space-y-1 text-sm text-muted-foreground">
-                                <div className="flex items-center gap-2">
-                                  <Mail className="w-4 h-4" />
-                                  {intern.email}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <User className="w-4 h-4" />
-                                  {intern.role}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Calendar className="w-4 h-4" />
-                                  {intern.start_date} to {intern.end_date}
-                                </div>
-                              </div>
-                              <div className="flex gap-2">
-                                <Badge variant="outline">
-                                  <Hash className="w-3 h-3 mr-1" />
-                                  {intern.certificate_id}
-                                </Badge>
-                                <Badge variant="secondary">
-                                  Code: {intern.verification_code}
-                                </Badge>
-                              </div>
-                            </div>
-                            <Button
-                              variant="gradient"
-                              size="sm"
-                              onClick={() => handleDownloadCertificate(intern)}
-                            >
-                              <Download className="w-4 h-4 mr-2" />
-                              Download PDF
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <InternTable 
+              interns={interns}
+              onEdit={setEditingIntern}
+              onDelete={handleDeleteIntern}
+              onDownloadCertificate={handleDownloadCertificate}
+              onPreviewCertificate={setPreviewIntern}
+              onShareCertificate={(intern) => {
+                const shareUrl = `${window.location.origin}/intern/${intern.verification_code}`;
+                navigator.clipboard.writeText(shareUrl);
+                toast({
+                  title: "Link Copied",
+                  description: "Certificate link has been copied to clipboard.",
+                });
+              }}
+              onStatusChange={handleStatusChange}
+              onExportCSV={handleExportCSV}
+            />
           </TabsContent>
         </Tabs>
       </div>
+
+      <EditInternDialog 
+        intern={editingIntern}
+        open={!!editingIntern}
+        onOpenChange={(open) => !open && setEditingIntern(null)}
+        onSave={handleEditIntern}
+      />
+
+      <CertificatePreviewDialog 
+        intern={previewIntern}
+        open={!!previewIntern}
+        onOpenChange={(open) => !open && setPreviewIntern(null)}
+      />
     </div>
   );
 };
