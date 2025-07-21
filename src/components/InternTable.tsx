@@ -173,9 +173,9 @@ export const InternTable: React.FC<InternTableProps> = ({ interns, onUpdate }) =
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'completed':
+      case 'Completed':
         return <Badge variant="default">Completed</Badge>;
-      case 'revoked':
+      case 'Revoked':
         return <Badge variant="destructive">Revoked</Badge>;
       default:
         return <Badge variant="secondary">Active</Badge>;
@@ -210,9 +210,9 @@ export const InternTable: React.FC<InternTableProps> = ({ interns, onUpdate }) =
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="revoked">Revoked</SelectItem>
+              <SelectItem value="Active">Active</SelectItem>
+              <SelectItem value="Completed">Completed</SelectItem>
+              <SelectItem value="Revoked">Revoked</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -248,16 +248,16 @@ export const InternTable: React.FC<InternTableProps> = ({ interns, onUpdate }) =
                   <TableCell className="font-mono text-sm">{intern.certificate_id}</TableCell>
                   <TableCell>
                     <Select
-                      value={intern.status || 'active'}
+                      value={intern.status || 'Active'}
                       onValueChange={(value) => handleStatusChange(intern.id, value)}
                     >
                       <SelectTrigger className="w-32">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                        <SelectItem value="revoked">Revoked</SelectItem>
+                        <SelectItem value="Active">Active</SelectItem>
+                        <SelectItem value="Completed">Completed</SelectItem>
+                        <SelectItem value="Revoked">Revoked</SelectItem>
                       </SelectContent>
                     </Select>
                   </TableCell>

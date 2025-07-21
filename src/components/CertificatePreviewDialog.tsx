@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Download, Share2 } from 'lucide-react';
-import { CertificateTemplate } from './CertificateTemplate';
+import CertificateTemplate from './CertificateTemplate';
 import { useCertificateDownload } from '@/hooks/useCertificateDownload';
 import { useToast } from '@/hooks/use-toast';
 

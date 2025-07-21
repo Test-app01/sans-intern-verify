@@ -45,6 +45,7 @@ export type Database = {
           id: string
           role: string
           start_date: string
+          status: string
           updated_at: string
           verification_code: string
         }
@@ -57,6 +58,7 @@ export type Database = {
           id?: string
           role: string
           start_date: string
+          status?: string
           updated_at?: string
           verification_code: string
         }
@@ -69,6 +71,7 @@ export type Database = {
           id?: string
           role?: string
           start_date?: string
+          status?: string
           updated_at?: string
           verification_code?: string
         }

@@ -107,7 +107,14 @@ const AdminPanel = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setInterns(data || []);
+      
+      // Map the data to ensure status field is present with default value
+      const internsWithStatus = (data || []).map(intern => ({
+        ...intern,
+        status: intern.status || 'Active'
+      }));
+      
+      setInterns(internsWithStatus);
     } catch (error) {
       toast({
         title: "Error",
