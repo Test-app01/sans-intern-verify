@@ -6,12 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { UserPlus, Users, LogOut, Calendar, Mail, User, Award, Hash, Lock, Download } from 'lucide-react';
+import { UserPlus, Users, LogOut, User, Award, Lock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useCertificateDownload } from '@/hooks/useCertificateDownload';
+import { InternTable } from '@/components/InternTable';
 
 interface Intern {
   id: string;
@@ -22,13 +21,13 @@ interface Intern {
   end_date: string;
   certificate_id: string;
   verification_code: string;
+  status: string;
   created_at: string;
 }
 
 const AdminPanel = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { downloadCertificate } = useCertificateDownload();
   const [interns, setInterns] = useState<Intern[]>([]);
   const [loading, setLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -177,30 +176,6 @@ const AdminPanel = () => {
     }
   };
 
-  const handleDownloadCertificate = async (intern: Intern) => {
-    const success = await downloadCertificate({
-      fullName: intern.full_name,
-      role: intern.role,
-      startDate: intern.start_date,
-      endDate: intern.end_date,
-      certificateId: intern.certificate_id,
-      verificationCode: intern.verification_code
-    });
-
-    if (success) {
-      toast({
-        title: "Certificate Downloaded",
-        description: `PDF certificate for ${intern.full_name} has been downloaded`,
-      });
-    } else {
-      toast({
-        title: "Download Failed",
-        description: "Failed to generate certificate PDF",
-        variant: "destructive"
-      });
-    }
-  };
-
   // Login form
   if (!isAuthenticated) {
     return (
@@ -254,12 +229,6 @@ const AdminPanel = () => {
                   {loginLoading ? 'Signing In...' : 'Sign In'}
                 </Button>
               </form>
-
-              <div className="mt-6 text-center text-sm text-muted-foreground">
-                <p>Demo Credentials:</p>
-                <p>Username: <code className="bg-muted px-1 rounded">admin</code></p>
-                <p>Password: <code className="bg-muted px-1 rounded">sansmedia2024</code></p>
-              </div>
             </CardContent>
           </Card>
         </div>
@@ -386,71 +355,7 @@ const AdminPanel = () => {
           </TabsContent>
 
           <TabsContent value="manage-interns">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-primary" />
-                  Manage Interns
-                </CardTitle>
-                <CardDescription>
-                  View and manage all registered interns
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {interns.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No interns yet</h3>
-                    <p className="text-muted-foreground">Add your first intern to get started</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {interns.map((intern) => (
-                      <Card key={intern.id} className="bg-card/50">
-                        <CardContent className="pt-6">
-                          <div className="flex items-start justify-between">
-                            <div className="space-y-2">
-                              <h3 className="font-semibold text-lg">{intern.full_name}</h3>
-                              <div className="space-y-1 text-sm text-muted-foreground">
-                                <div className="flex items-center gap-2">
-                                  <Mail className="w-4 h-4" />
-                                  {intern.email}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <User className="w-4 h-4" />
-                                  {intern.role}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Calendar className="w-4 h-4" />
-                                  {intern.start_date} to {intern.end_date}
-                                </div>
-                              </div>
-                              <div className="flex gap-2">
-                                <Badge variant="outline">
-                                  <Hash className="w-3 h-3 mr-1" />
-                                  {intern.certificate_id}
-                                </Badge>
-                                <Badge variant="secondary">
-                                  Code: {intern.verification_code}
-                                </Badge>
-                              </div>
-                            </div>
-                            <Button
-                              variant="gradient"
-                              size="sm"
-                              onClick={() => handleDownloadCertificate(intern)}
-                            >
-                              <Download className="w-4 h-4 mr-2" />
-                              Download PDF
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <InternTable interns={interns} onUpdate={loadInterns} />
           </TabsContent>
         </Tabs>
       </div>

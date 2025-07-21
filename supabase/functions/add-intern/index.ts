@@ -33,12 +33,14 @@ serve(async (req) => {
         start_date: startDate,
         end_date: endDate,
         certificate_id: certificateId,
-        verification_code: verificationCode
+        verification_code: verificationCode,
+        status: 'active'
       })
       .select()
       .single()
 
     if (error) {
+      console.error('Database error:', error)
       return new Response(
         JSON.stringify({ error: 'Failed to add intern' }),
         { 
@@ -57,6 +59,7 @@ serve(async (req) => {
     )
 
   } catch (error) {
+    console.error('Server error:', error)
     return new Response(
       JSON.stringify({ error: 'Server error' }),
       { 
