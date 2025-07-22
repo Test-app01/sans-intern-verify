@@ -1,13 +1,15 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Download, Share2, ArrowLeft, Calendar, Mail, User, Award, CheckCircle, FileText, Hash } from 'lucide-react';
+import { Download, Share2, ArrowLeft, Calendar, Mail, User, Award, CheckCircle, FileText, Hash, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useCertificateDownload } from '@/hooks/useCertificateDownload';
+import { CertificatePreviewDialog } from '@/components/CertificatePreviewDialog';
 
 interface Intern {
   id: string;
@@ -28,6 +30,7 @@ const InternProfile = () => {
   const { downloadCertificate } = useCertificateDownload();
   const [intern, setIntern] = useState<Intern | null>(null);
   const [loading, setLoading] = useState(true);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   useEffect(() => {
     loadIntern();
@@ -249,6 +252,16 @@ const InternProfile = () => {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <Button 
+                    variant="outline" 
+                    size="lg" 
+                    className="w-full"
+                    onClick={() => setPreviewOpen(true)}
+                  >
+                    <Eye className="w-4 h-4 mr-2" />
+                    View Certificate
+                  </Button>
+                  
+                  <Button 
                     variant="gradient" 
                     size="lg" 
                     className="w-full"
@@ -311,6 +324,18 @@ const InternProfile = () => {
           </div>
         </div>
       </div>
+
+      {/* Certificate Preview Dialog */}
+      {intern && (
+        <CertificatePreviewDialog
+          intern={{
+            ...intern,
+            status: 'Active'
+          }}
+          open={previewOpen}
+          onOpenChange={setPreviewOpen}
+        />
+      )}
     </div>
   );
 };
