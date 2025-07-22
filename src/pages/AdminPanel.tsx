@@ -69,7 +69,7 @@ const AdminPanel = () => {
         body: { username: loginData.username, password: loginData.password }
       });
 
-      if (error || !data.success) {
+      if (error || !data?.success) {
         toast({
           title: "Login Failed",
           description: "Invalid credentials. Please try again.",
@@ -89,6 +89,7 @@ const AdminPanel = () => {
 
       loadInterns();
     } catch (error) {
+      console.error('Login error:', error);
       toast({
         title: "Error",
         description: "Something went wrong. Please try again.",
@@ -106,7 +107,10 @@ const AdminPanel = () => {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error loading interns:', error);
+        throw error;
+      }
       
       // Map the data to ensure status field is present with default value
       const internsWithStatus = (data || []).map(intern => ({
@@ -116,6 +120,7 @@ const AdminPanel = () => {
       
       setInterns(internsWithStatus);
     } catch (error) {
+      console.error('Failed to load interns:', error);
       toast({
         title: "Error",
         description: "Failed to load interns",
@@ -137,10 +142,31 @@ const AdminPanel = () => {
   const handleAddIntern = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.fullName || !formData.email || !formData.role || !formData.startDate || !formData.endDate) {
+    if (!formData.fullName?.trim() || !formData.email?.trim() || !formData.role?.trim() || !formData.startDate || !formData.endDate) {
       toast({
         title: "Error",
         description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate date range
+    if (new Date(formData.startDate) >= new Date(formData.endDate)) {
+      toast({
+        title: "Error",
+        description: "End date must be after start date",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid email address",
         variant: "destructive"
       });
       return;
@@ -150,11 +176,22 @@ const AdminPanel = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke('add-intern', {
-        body: formData
+        body: {
+          fullName: formData.fullName.trim(),
+          email: formData.email.trim(),
+          role: formData.role.trim(),
+          startDate: formData.startDate,
+          endDate: formData.endDate
+        }
       });
 
-      if (error || !data.success) {
-        throw new Error('Failed to add intern');
+      if (error) {
+        console.error('Error adding intern:', error);
+        throw error;
+      }
+
+      if (!data?.success) {
+        throw new Error(data?.error || 'Failed to add intern');
       }
 
       toast({
@@ -173,9 +210,10 @@ const AdminPanel = () => {
       
       await loadInterns();
     } catch (error) {
+      console.error('Error adding intern:', error);
       toast({
         title: "Error",
-        description: "Failed to add intern. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to add intern. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -232,7 +270,7 @@ const AdminPanel = () => {
                   </div>
                 </div>
 
-                <Button type="submit" variant="gradient" size="lg" className="w-full" disabled={loginLoading}>
+                <Button type="submit" variant="default" size="lg" className="w-full" disabled={loginLoading}>
                   {loginLoading ? 'Signing In...' : 'Sign In'}
                 </Button>
               </form>
@@ -352,7 +390,7 @@ const AdminPanel = () => {
 
                   <Separator />
 
-                  <Button type="submit" variant="gradient" size="lg" className="w-full md:w-auto" disabled={loading}>
+                  <Button type="submit" variant="default" size="lg" className="w-full md:w-auto" disabled={loading}>
                     <Award className="w-4 h-4 mr-2" />
                     {loading ? 'Adding Intern...' : 'Add Intern & Generate Certificate'}
                   </Button>
