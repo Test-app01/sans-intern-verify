@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,6 +35,7 @@ export const InternTable: React.FC<InternTableProps> = ({ interns, onUpdate }) =
   const [statusFilter, setStatusFilter] = useState('all');
   const [editingIntern, setEditingIntern] = useState<Intern | null>(null);
   const [previewIntern, setPreviewIntern] = useState<Intern | null>(null);
+  const [deletingIntern, setDeletingIntern] = useState<string | null>(null);
   const { toast } = useToast();
   const { downloadCertificate } = useCertificateDownload();
 
@@ -76,13 +76,21 @@ export const InternTable: React.FC<InternTableProps> = ({ interns, onUpdate }) =
       return;
     }
 
-    try {
-      const { error } = await supabase
-        .from('interns')
-        .delete()
-        .eq('id', internId);
+    setDeletingIntern(internId);
 
-      if (error) throw error;
+    try {
+      const { data, error } = await supabase.functions.invoke('delete-intern', {
+        body: { internId }
+      });
+
+      if (error) {
+        console.error('Error calling delete function:', error);
+        throw error;
+      }
+
+      if (!data?.success) {
+        throw new Error(data?.error || 'Failed to delete intern');
+      }
 
       toast({
         title: "Intern Deleted",
@@ -91,11 +99,14 @@ export const InternTable: React.FC<InternTableProps> = ({ interns, onUpdate }) =
 
       onUpdate();
     } catch (error) {
+      console.error('Error deleting intern:', error);
       toast({
         title: "Error",
-        description: "Failed to delete intern",
+        description: error instanceof Error ? error.message : "Failed to delete intern",
         variant: "destructive"
       });
+    } finally {
+      setDeletingIntern(null);
     }
   };
 
@@ -300,8 +311,9 @@ export const InternTable: React.FC<InternTableProps> = ({ interns, onUpdate }) =
                         size="sm"
                         onClick={() => handleDelete(intern.id, intern.full_name)}
                         title="Delete Intern"
+                        disabled={deletingIntern === intern.id}
                       >
-                        <Trash2 className="w-4 h-4 text-destructive" />
+                        <Trash2 className={`w-4 h-4 text-destructive ${deletingIntern === intern.id ? 'animate-spin' : ''}`} />
                       </Button>
                     </div>
                   </TableCell>
